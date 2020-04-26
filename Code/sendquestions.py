@@ -1,7 +1,7 @@
 # Download the helper library from https://www.twilio.com/docs/python/install
 from twilio.rest import Client
 
-phones = ['+18479159198', '+18473374700', '+12242840212']#, '+18479221678']
+phones = ['Numbers']
 
 questions = ['What is the capital of our country?',
 'How many limbs does a human have?',
