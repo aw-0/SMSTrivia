@@ -1,7 +1,8 @@
 # Download the helper library from https://www.twilio.com/docs/python/install
 from twilio.rest import Client
+import config as cfg
 
-phones = ['Numbers']
+phones = ['+12242840212']
 
 questions = ['What is the capital of our country?',
 'How many limbs does a human have?',
@@ -47,8 +48,8 @@ print(qa)
 
 # Your Account Sid and Auth Token from twilio.com/console
 # DANGER! This is insecure. See http://twil.io/secure
-account_sid = 'ACb9f38ef210a2dbefeec2e92f23a469e8'
-auth_token = '56a9df5590333bf5d1ead111c20ab291'
+account_sid = cfg.twilio["account_sid"]
+auth_token = cfg.twilio["auth_token"]
 client = Client(account_sid, auth_token)
 for number in phones:
     message = client.messages \
