@@ -2,7 +2,7 @@
 from twilio.rest import Client
 import config as cfg
 
-phones = ['+12242840212']
+phones = ['Number']
 
 questions = ['What is the capital of our country?',
 'How many limbs does a human have?',
