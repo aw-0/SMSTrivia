@@ -1,62 +1,51 @@
 # Download the helper library from https://www.twilio.com/docs/python/install
 from twilio.rest import Client
-import config as cfg
+import twilio_config as tcfg, qna_settings as qaset, players_config as pcfg
 
-phones = ['+12242840212']
+phones = pcfg.phones
 
-questions = ['What is the capital of our country?',
-'How many limbs does a human have?',
-'How many calories should a person have in a day?',
-'What is this coded in?',
-'Whats the capital of our State?']
+# qa = {"question": {"q_no": "1"}, {"question": "What is the capital of our country?"},
+# {"answers": "choice1": "A: Chicago",
+# "choice2": "B: Washington State",
+# "choice3": "C: San Francisco",
+# "choice4": "D: Washington D.C.",
+# "correct": "D: Washington D.C."}
 
-answers = {"0": {"choice1": "A: Chicago",
-"choice2": "B: Washington State",
-"choice3": "C: San Francisco",
-"choice4": "D: Washington D.C.",
-"correct": "D: Washington D.C."},
-"1": {"choice1": "Chicago",
-"choice2": "Washington State",
-"choice3": "San Francisco",
-"choice4": "Washington D.C.",
-"correct": "Washington D.C."},
-"2": {"choice1": "Chicago",
-"choice2": "Washington State",
-"choice3": "San Francisco",
-"choice4": "Washington D.C.",
-"correct": "Washington D.C."},
-"3": {"choice1": "Chicago",
-"choice2": "Washington State",
-"choice3": "San Francisco",
-"choice4": "Washington D.C.",
-"correct": "Washington D.C."},
-"4": {"choice1": "Chicago",
-"choice2": "Washington State",
-"choice3": "San Francisco",
-"choice4": "Washington D.C.",
-"correct": "Washington D.C."}}
 
-qa = ""
-qa = questions[0]
-qa = qa + "\n"
-qa = qa + answers["0"]["choice1"] + "\n"
-qa = qa + answers["0"]["choice2"] + "\n"
-qa = qa + answers["0"]["choice3"] + "\n"
-qa = qa + answers["0"]["choice4"]
+def create_question(question, answers):
+    qa = ""
+    qa = qa + "\n" + question["question"]
+    qa = qa + "\n"
+    qa = qa + answers["choice1"] + "\n"
+    qa = qa + answers["choice2"] + "\n"
+    qa = qa + answers["choice3"] + "\n"
+    qa = qa + answers["choice4"]
+    return qa
 
-print(qa)
+def create_questions(player_name, number, questions, answers):
+    # qa = ""
+    # qa = qa + "Hello " + player_name + ","
+    for qkey in questions:
+        qa = create_question(questions[qkey], answers[qkey])
+        message = client.messages \
+                         .create(
+                            body=qa,
+                            from_=tcfg.twilio["twilio_number"],
+                            to=number
+                            )
+
+        print(message.sid)
+    return qa
 
 # Your Account Sid and Auth Token from twilio.com/console
 # DANGER! This is insecure. See http://twil.io/secure
-account_sid = cfg.twilio["account_sid"]
-auth_token = cfg.twilio["auth_token"]
+account_sid = tcfg.twilio["account_sid"]
+auth_token = tcfg.twilio["auth_token"]
 client = Client(account_sid, auth_token)
+i = 0
 for number in phones:
-    message = client.messages \
-                    .create(
-                        body=qa,
-                        from_='+12568575536',
-                        to=number
-                        )
+    qa = create_questions(pcfg.players[i], number, qaset.questions, qaset.answers)
 
-    print(message.sid)
+    i = i + 1
+
+    print(qa)
