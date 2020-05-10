@@ -34,7 +34,7 @@ def create_questions(player_name, number, questions, answers):
                             to=number
                             )
 
-        print(message.sid)
+        #print(message.sid)
     return qa
 
 # Your Account Sid and Auth Token from twilio.com/console
