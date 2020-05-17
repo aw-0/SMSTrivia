@@ -25,16 +25,16 @@ def create_question(question, answers):
 def create_questions(player_name, number, questions, answers):
     # qa = ""
     # qa = qa + "Hello " + player_name + ","
-    for qkey in questions:
-        qa = create_question(questions[qkey], answers[qkey])
-        message = client.messages \
-                         .create(
-                            body=qa,
-                            from_=tcfg.twilio["twilio_number"],
-                            to=number
-                            )
+    # for qkey in questions:
+    qa = create_question(questions['1'], answers['1'])
+    message = client.messages \
+                        .create(
+                        body=qa,
+                        from_=tcfg.twilio["twilio_number"],
+                        to=number
+                        )
 
-        print(message.sid)
+    print(message.sid)
     return qa
 
 # Your Account Sid and Auth Token from twilio.com/console

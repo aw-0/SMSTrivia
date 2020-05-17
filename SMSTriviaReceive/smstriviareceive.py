@@ -1,41 +1,55 @@
 from flask import Flask, request
 from twilio.rest import Client
 from twilio.twiml.messaging_response import MessagingResponse
+import twilio_config as tcfg, qna_settings as qaset, players_config as pcfg
 
-account_sid = "ACb9f38ef210a2dbefeec2e92f23a469e8"#tcfg.twilio["account_sid"]
-auth_token = "0ae8bb03e3e532dd0f8d1bae24699037"#tcfg.twilio["auth_token"]
+account_sid = tcfg.twilio["account_sid"]
+auth_token = tcfg.twilio["auth_token"]
 client = Client(account_sid, auth_token)
-
 
 app = Flask(__name__)
 
+def create_question(question, answers):
+    qa = ""
+    qa = qa + "\n" + question["question"]
+    qa = qa + "\n"
+    qa = qa + answers["choice1"] + "\n"
+    qa = qa + answers["choice2"] + "\n"
+    qa = qa + answers["choice3"] + "\n"
+    qa = qa + answers["choice4"]
+    return qa
+
+def send_question(number, questions, answers, qkey):
+    # for qkey in questions:
+    qa = create_question(questions[qkey], answers[qkey])
+    message = client.messages \
+                        .create(
+                        body=qa,
+                        from_=tcfg.twilio["twilio_number"],
+                        to=number
+                        )
+
+    print(message.sid)
+    return qa
 
 @app.route('/sms', methods=['POST'])
 def sms():
     number = request.form['From']
     message_body = request.form['Body']
 
-    resp = MessagingResponse()
-    messagelog = 'Hello World {}, you said: {}'.format(number, message_body)
-    resp.message(messagelog)
+    lastq,lasta = message_body.split(":")
+    nextkey = str(int(lastq) + 1)
 
+    #if message_body == "1:D":
     file_object = open('log.txt', 'a')
-    file_object.write(messagelog)
+    file_object.write("\n Correct Answer")
     file_object.close()
 
-    if message_body == "0:D":
-         file_object = open('log.txt', 'a')
-         file_object.write("\n Correct Answer")
-         file_object.close()
-
-         message = client.messages \
-                          .create(
-                             body="Correct Answer!",
-                             from_="+12568575536",#tcfg.twilio["twilio_number"],
-                             to=number
-                             )
-
-    return str(resp)
+    nextq = send_question(number, qaset.questions, qaset.answers, nextkey)
 
 if __name__ == '__main__':
+    phones = pcfg.phones
+    for number in phones:
+        # sends first question to all
+        qa = send_question(number, qaset.questions, qaset.answers, "1")
     app.run()
