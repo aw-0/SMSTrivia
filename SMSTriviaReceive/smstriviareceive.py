@@ -54,13 +54,19 @@ def send_question(number, questions, answers, qkey):
     print(message.sid)
     return qa
 
+def end_message(number):
+    message = client.messages \
+                        .create(
+                        body="You have reached the end of the Quiz! Please wait until everyone has finished answering the questions",
+                        from_=tcfg.twilio["twilio_number"],
+                        to=number
+                        )
+    print(message.sid)
+
 @app.route('/sms', methods=['POST'])
 def sms():
     number = request.form['From']
     message_body = request.form['Body']
-
-    # lastq,lasta = message_body.split(":")
-    # nextkey = str(int(lastq) + 1)
 
     lasta = message_body
     currentQuestion = player_answers[number]["currentQuestion"]
@@ -75,10 +81,13 @@ def sms():
         file_object.write(f"{number}, {currentQuestion}, {str(score)}")
         file_object.close()
 
-    player_answers[number]["currentQuestion"] += 1
-    nextkey = str(player_answers[number]["currentQuestion"])
+    temp_nextkey = str(player_answers[number]["currentQuestion"] + 1)
 
-    nextq = send_question(number, qaset.questions, qaset.answers, nextkey)
+    if temp_nextkey not in qaset.questions:
+        end_message(number)
+    else:
+        player_answers[number]["currentQuestion"] += 1
+        nextq = send_question(number, qaset.questions, qaset.answers, temp_nextkey)
 
 if __name__ == '__main__':
     for number in phones:
