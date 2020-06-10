@@ -12,22 +12,31 @@ player_answers = {
     pcfg.phones[0]: {
             "totalScore": 0,
             "currentQuestion": 1,
+            "done": False,
             "answers": {
             "1": "",
             "2": "",
             "3": "",
             "4": "",
-            "5": ""}},
+            "5": "",}},
     pcfg.phones[1]: {
             "totalScore": 0,
             "currentQuestion": 1,
+            "done": False,
             "answers": {
             "1": "",
             "2": "",
             "3": "",
             "4": "",
             "5": ""}}}
-print(player_answers["+18479221678"]["currentQuestion"])
+scoreboard = {
+    "1800": 3,
+    "1224": 5,
+    "1312": 4
+}
+
+for key, value in sorted(scoreboard.items(), key=lambda item: item[1], reverse=True):
+    print("%s: %s" % (key, scoreboard[key]))
 
 app = Flask(__name__)
 
@@ -63,6 +72,15 @@ def end_message(number):
                         )
     print(message.sid)
 
+def send_message(number, text):
+    message = client.messages \
+                        .create(
+                        body=text,
+                        from_=tcfg.twilio["twilio_number"],
+                        to=number
+                        )
+    print(message.sid)
+
 @app.route('/sms', methods=['POST'])
 def sms():
     number = request.form['From']
@@ -85,9 +103,44 @@ def sms():
 
     if temp_nextkey not in qaset.questions:
         end_message(number)
+        player_answers[number]["done"] = True
     else:
         player_answers[number]["currentQuestion"] += 1
         nextq = send_question(number, qaset.questions, qaset.answers, temp_nextkey)
+
+    end_or_not = True
+
+    for phonekey in player_answers:
+        if player_answers[phonekey]["done"] == False:
+            end_or_not = False
+            break
+
+    if end_or_not == True:
+        for phonekey in player_answers:
+
+            winner = "no one!"
+            send_message(phonekey, "Congratulations! Everyone has finished the quiz!")
+
+            # board = f"""
+            # --LEADERBOARD--
+            #
+            # {phones[0]} finished with {player_answers[phones[0]['totalScore']} correct!
+            #
+            # {phones[1]} finished with {player_answers[phones[1]]['totalScore']} correct!
+            #
+            # In the end, {} won!
+            #
+            # """
+            send_message(phonekey, f"You finished with {player_answers[phonekey]['totalScore']} correct!")
+            #--LEADERBOARD--
+
+            #Player1 finished with 3(totalscore) questions correct!
+
+            #Player2 finished with 5 questions correct!
+
+            #In the end, Player2 won!
+
+
 
 if __name__ == '__main__':
     for number in phones:
