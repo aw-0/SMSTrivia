@@ -29,14 +29,35 @@ player_answers = {
             "3": "",
             "4": "",
             "5": ""}}}
-scoreboard = {
-    "1800": 3,
-    "1224": 5,
-    "1312": 4
-}
 
-for key, value in sorted(scoreboard.items(), key=lambda item: item[1], reverse=True):
-    print("%s: %s" % (key, scoreboard[key]))
+#player_answers2 = {
+#    "1224": 5,
+#    "1312": 4
+#}
+#player_answers2.update( {'2738' : 2} )
+#player_asnwers2.update('2739' = '3' ) 
+
+#print (player_answers2)
+# scoreboard = {
+#   pcfg.phones[0]: player_answers[0]["totalScore"]
+#   pcfg.phones[1]: player_answers[1]["totalScore"]
+# }
+
+#for key in player_answers:
+#    print("%s: %s" % (key, player_answers[key]["totalScore"]))
+    #player_answers2.update( key = player_answers[key]["totalScore"])
+    #player_answers2[key]=player_answers[key]['totalScore']
+    #player_answers2.update( {key: player_answers[key]["totalScore"]})
+#for key in player_answers2:
+    #print("%s: %s" % (key, player_answers2[key]))
+
+#scoreboard = {
+#    "1224": 5,
+#    "1312": 4
+#}
+
+#for key, value in sorted(scoreboard.items(), key=lambda item: item[1], reverse=True):
+    #print("%s: %s" % (key, scoreboard[key]))
 
 app = Flask(__name__)
 
@@ -116,10 +137,19 @@ def sms():
             break
 
     if end_or_not == True:
+        leaderboard = {}
+        for key in player_answers:
+            leaderboard[key]=player_answers[key]['totalScore']
+        sortedLeaderboard = sorted(leaderboard.items(), key=lambda item: item[1], reverse=True)
         for phonekey in player_answers:
 
             winner = "no one!"
+            game_end_message = ""
+            #for key in sortedLeaderboard:
+                #game_end_message = game_end_message + str(key) + "-" + str(sortedLeaderboard[key])
+                #game_end_message = game_end_message + "\n"
             send_message(phonekey, "Congratulations! Everyone has finished the quiz!")
+            #send_message(phonekey, game_end_message)
 
             # board = f"""
             # --LEADERBOARD--
@@ -131,7 +161,7 @@ def sms():
             # In the end, {} won!
             #
             # """
-            send_message(phonekey, f"You finished with {player_answers[phonekey]['totalScore']} correct!")
+            #send_message(phonekey, f"You finished with {player_answers[phonekey]['totalScore']} correct!")
             #--LEADERBOARD--
 
             #Player1 finished with 3(totalscore) questions correct!
