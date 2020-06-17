@@ -9,27 +9,34 @@ client = Client(account_sid, auth_token)
 phones = pcfg.phones
 
 player_answers = {
-    pcfg.phones[0]: {
+}
+    # pcfg.phones[0]: {
+    #         "totalScore": 0,
+    #         "currentQuestion": 1,
+    #         "done": False,
+    #         "answers": {
+    #         "1": "",
+    #         "2": "",
+    #         "3": "",
+    #         "4": "",
+    #         "5": "",}},
+    # pcfg.phones[1]: {
+    #         "totalScore": 0,
+    #         "currentQuestion": 1,
+    #         "done": False,
+    #         "answers": {
+    #         "1": "",
+    #         "2": "",
+    #         "3": "",
+    #         "4": "",
+    #         "5": ""}}}
+for phonekey in pcfg.phones:
+    player_answers.update( {phonekey : {
             "totalScore": 0,
             "currentQuestion": 1,
             "done": False,
             "answers": {
-            "1": "",
-            "2": "",
-            "3": "",
-            "4": "",
-            "5": "",}},
-    pcfg.phones[1]: {
-            "totalScore": 0,
-            "currentQuestion": 1,
-            "done": False,
-            "answers": {
-            "1": "",
-            "2": "",
-            "3": "",
-            "4": "",
-            "5": ""}}}
-
+            }}})
 #player_answers2 = {
 #    "1224": 5,
 #    "1312": 4
@@ -81,7 +88,7 @@ def send_question(number, questions, answers, qkey):
                         to=number
                         )
 
-    print(message.sid)
+    #print(message.sid)
     return qa
 
 def end_message(number):
@@ -91,7 +98,7 @@ def end_message(number):
                         from_=tcfg.twilio["twilio_number"],
                         to=number
                         )
-    print(message.sid)
+    #print(message.sid)
 
 def send_message(number, text):
     message = client.messages \
@@ -100,7 +107,7 @@ def send_message(number, text):
                         from_=tcfg.twilio["twilio_number"],
                         to=number
                         )
-    print(message.sid)
+    #print(message.sid)
 
 @app.route('/sms', methods=['POST'])
 def sms():
@@ -110,8 +117,8 @@ def sms():
     lasta = message_body
     currentQuestion = player_answers[number]["currentQuestion"]
 
-    print(qaset.answers[str(currentQuestion)]["correct"])
-    print(lasta)
+    #print(qaset.answers[str(currentQuestion)]["correct"])
+    #print(lasta)
     if lasta == qaset.answers[str(currentQuestion)]["correct"]:
         score = player_answers[number]["totalScore"]
         score += 1
@@ -142,35 +149,16 @@ def sms():
             leaderboard[key]=player_answers[key]['totalScore']
         sortedLeaderboard = sorted(leaderboard.items(), key=lambda item: item[1], reverse=True)
         for phonekey in player_answers:
-
-            winner = "no one!"
+            #print(sortedLeaderboard)
             game_end_message = ""
-            #for key in sortedLeaderboard:
-                #game_end_message = game_end_message + str(key) + "-" + str(sortedLeaderboard[key])
+            for (key, value) in sortedLeaderboard:
+                leaderboardMessage = ("%s: %s" % (key, value))
+                game_end_message = game_end_message + leaderboardMessage + "\n"
                 #game_end_message = game_end_message + "\n"
             send_message(phonekey, "Congratulations! Everyone has finished the quiz!")
-            #send_message(phonekey, game_end_message)
-
-            # board = f"""
-            # --LEADERBOARD--
-            #
-            # {phones[0]} finished with {player_answers[phones[0]['totalScore']} correct!
-            #
-            # {phones[1]} finished with {player_answers[phones[1]]['totalScore']} correct!
-            #
-            # In the end, {} won!
-            #
-            # """
+            #print(game_end_message)
+            send_message(phonekey,f"\n Leaderboard \n{game_end_message}")
             #send_message(phonekey, f"You finished with {player_answers[phonekey]['totalScore']} correct!")
-            #--LEADERBOARD--
-
-            #Player1 finished with 3(totalscore) questions correct!
-
-            #Player2 finished with 5 questions correct!
-
-            #In the end, Player2 won!
-
-
 
 if __name__ == '__main__':
     for number in phones:
