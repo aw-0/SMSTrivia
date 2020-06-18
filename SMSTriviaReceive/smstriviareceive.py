@@ -1,7 +1,9 @@
+#importing libraries
 from flask import Flask, request
 from twilio.rest import Client
 from twilio.twiml.messaging_response import MessagingResponse
 import twilio_config as tcfg, qna_settings as qaset, players_config as pcfg
+#set configurations
 
 account_sid = tcfg.twilio["account_sid"]
 auth_token = tcfg.twilio["auth_token"]
@@ -10,26 +12,7 @@ phones = pcfg.phones
 
 player_answers = {
 }
-    # pcfg.phones[0]: {
-    #         "totalScore": 0,
-    #         "currentQuestion": 1,
-    #         "done": False,
-    #         "answers": {
-    #         "1": "",
-    #         "2": "",
-    #         "3": "",
-    #         "4": "",
-    #         "5": "",}},
-    # pcfg.phones[1]: {
-    #         "totalScore": 0,
-    #         "currentQuestion": 1,
-    #         "done": False,
-    #         "answers": {
-    #         "1": "",
-    #         "2": "",
-    #         "3": "",
-    #         "4": "",
-    #         "5": ""}}}
+
 for phonekey in pcfg.phones:
     player_answers.update( {phonekey : {
             "totalScore": 0,
@@ -37,37 +20,9 @@ for phonekey in pcfg.phones:
             "done": False,
             "answers": {
             }}})
-#player_answers2 = {
-#    "1224": 5,
-#    "1312": 4
-#}
-#player_answers2.update( {'2738' : 2} )
-#player_asnwers2.update('2739' = '3' ) 
-
-#print (player_answers2)
-# scoreboard = {
-#   pcfg.phones[0]: player_answers[0]["totalScore"]
-#   pcfg.phones[1]: player_answers[1]["totalScore"]
-# }
-
-#for key in player_answers:
-#    print("%s: %s" % (key, player_answers[key]["totalScore"]))
-    #player_answers2.update( key = player_answers[key]["totalScore"])
-    #player_answers2[key]=player_answers[key]['totalScore']
-    #player_answers2.update( {key: player_answers[key]["totalScore"]})
-#for key in player_answers2:
-    #print("%s: %s" % (key, player_answers2[key]))
-
-#scoreboard = {
-#    "1224": 5,
-#    "1312": 4
-#}
-
-#for key, value in sorted(scoreboard.items(), key=lambda item: item[1], reverse=True):
-    #print("%s: %s" % (key, scoreboard[key]))
-
+#start flask webserver
 app = Flask(__name__)
-
+#creating the question as a SMS text
 def create_question(question, answers):
     qa = ""
     qa = qa + "\n" + question["question"]
@@ -77,9 +32,8 @@ def create_question(question, answers):
     qa = qa + answers["choice3"] + "\n"
     qa = qa + answers["choice4"]
     return qa
-
+#sends the question through SMS text
 def send_question(number, questions, answers, qkey):
-    # for qkey in questions:
     qa = create_question(questions[qkey], answers[qkey])
     message = client.messages \
                         .create(
@@ -88,9 +42,8 @@ def send_question(number, questions, answers, qkey):
                         to=number
                         )
 
-    #print(message.sid)
     return qa
-
+#sends a message informing the player that they have finished
 def end_message(number):
     message = client.messages \
                         .create(
@@ -98,8 +51,7 @@ def end_message(number):
                         from_=tcfg.twilio["twilio_number"],
                         to=number
                         )
-    #print(message.sid)
-
+#is able to send a message to the player using SMS text
 def send_message(number, text):
     message = client.messages \
                         .create(
@@ -107,25 +59,34 @@ def send_message(number, text):
                         from_=tcfg.twilio["twilio_number"],
                         to=number
                         )
-    #print(message.sid)
+#sends the leaderboard and final message through SMS text
+def print_leaderboard(player_answers):
+    leaderboard = {}
+    for key in player_answers:
+        leaderboard[key]=player_answers[key]['totalScore']
+    sortedLeaderboard = sorted(leaderboard.items(), key=lambda item: item[1], reverse=True)
+    for phonekey in player_answers:
+        game_end_message = ""
+        for (key, value) in sortedLeaderboard:
+            leaderboardMessage = ("%s: %s" % (key, value))
+            game_end_message = game_end_message + leaderboardMessage + "\n"
+        send_message(phonekey,f"\nCongratulations! Everyone has finished the quiz! \n \n ---Leaderboard--- \n{game_end_message}")
 
+#adds one point to the score
+def Increment_score(player_answers):
+    score = player_answers[number]["totalScore"]
+    score += 1
+    player_answers[number]["totalScore"] = score
+#where the SMS gets received
 @app.route('/sms', methods=['POST'])
 def sms():
     number = request.form['From']
     message_body = request.form['Body']
-
     lasta = message_body
     currentQuestion = player_answers[number]["currentQuestion"]
 
-    #print(qaset.answers[str(currentQuestion)]["correct"])
-    #print(lasta)
     if lasta == qaset.answers[str(currentQuestion)]["correct"]:
-        score = player_answers[number]["totalScore"]
-        score += 1
-        player_answers[number]["totalScore"] = score
-        file_object = open('log.txt', 'a')
-        file_object.write(f"{number}, {currentQuestion}, {str(score)}")
-        file_object.close()
+        Increment_score(player_answers)
 
     temp_nextkey = str(player_answers[number]["currentQuestion"] + 1)
 
@@ -144,24 +105,28 @@ def sms():
             break
 
     if end_or_not == True:
-        leaderboard = {}
-        for key in player_answers:
-            leaderboard[key]=player_answers[key]['totalScore']
-        sortedLeaderboard = sorted(leaderboard.items(), key=lambda item: item[1], reverse=True)
-        for phonekey in player_answers:
-            #print(sortedLeaderboard)
-            game_end_message = ""
-            for (key, value) in sortedLeaderboard:
-                leaderboardMessage = ("%s: %s" % (key, value))
-                game_end_message = game_end_message + leaderboardMessage + "\n"
-                #game_end_message = game_end_message + "\n"
-            send_message(phonekey, "Congratulations! Everyone has finished the quiz!")
-            #print(game_end_message)
-            send_message(phonekey,f"\n Leaderboard \n{game_end_message}")
-            #send_message(phonekey, f"You finished with {player_answers[phonekey]['totalScore']} correct!")
-
+        print_leaderboard(player_answers)
 if __name__ == '__main__':
     for number in phones:
         # sends first question to all
         qa = send_question(number, qaset.questions, qaset.answers, "1")
     app.run()
+
+
+#Example code
+##############
+
+#file_object = open('log.txt', 'a')
+#file_object.write(f"{number}, {currentQuestion}, {str(score)}")
+#file_object.close()
+
+#player_answers2.update( {'2738' : 2} )
+#    print("%s: %s" % (key, player_answers[key]["totalScore"]))
+    #player_answers2.update( key = player_answers[key]["totalScore"])
+    #player_answers2[key]=player_answers[key]['totalScore']
+    #player_answers2.update( {key: player_answers[key]["totalScore"]})
+#for key in player_answers2:
+    #print("%s: %s" % (key, player_answers2[key]))
+
+#for key, value in sorted(scoreboard.items(), key=lambda item: item[1], reverse=True):
+    #print("%s: %s" % (key, scoreboard[key]))
